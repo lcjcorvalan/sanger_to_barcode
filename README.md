@@ -55,9 +55,9 @@ AA_lib <- "Ath_rbcL_aa.fa"  # Amino acid reference library for frame detection
 # Outputs
 `Prefix_final.fasta` : Final fasta
 
-`Prefix_F_trim.fq` : Trimmed Fwd fq \n
+`Prefix_F_trim.fq` : Trimmed Fwd fq
 
-`Prefix_R_trim.fq` : Trimmed Rev fq \n
+`Prefix_R_trim.fq` : Trimmed Rev fq
 
 `tbl_final.csv` : Final table with all informations
 
