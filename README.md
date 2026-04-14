@@ -31,8 +31,10 @@ Rscript Sanger_barcode.r Ab1.csv
 ```
 The Ab1.csv file must be formatted as follows:
 
-```"Fwd_file","Rev_file","Note: .ab1 files must be located in the paths specified in the CSV file"
+```csv
+"Fwd_file","Rev_file","Note: .ab1 files must be located in the paths specified in the CSV file"
 "Ab1_file/PAV296_rbcLB-F_A01_BCPlan-06-S.ab1","Ab1_file/PAV296_rbcLB-R_A01_BCPlan-07-S.ab1","Ab1_file/PAV296_rbcLB" 
+
 ```
 
 Note: .ab1 files must be located in the paths specified in the CSV file
@@ -47,9 +49,9 @@ step <- 2         # Step size
 AA_lib <- "Ath_rbcL_aa.fa"  # Amino acid reference library for frame detection
 
 # Outputs
-`Prefix_final.fasta` : Final fasta
-`Prefix_F_trim.fq` : Trimmed Fwd fq
-`Prefix_R_trim.fq` : Trimmed Rev fq
+`Prefix_final.fasta` : Final fasta \n
+`Prefix_F_trim.fq` : Trimmed Fwd fq \n
+`Prefix_R_trim.fq` : Trimmed Rev fq \n
 `tbl_final.csv` : Final table with all informations
 
 
