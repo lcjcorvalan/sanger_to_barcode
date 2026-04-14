@@ -42,10 +42,11 @@ Note: .ab1 files must be located in the paths specified in the CSV file
 # Options
 
 The settings of parameters shoub done directly on Rscrip
+cutoff <- 30      # Minimum quality threshold␣␣
+window <- 4       # Sliding window size␣␣
 
-cutoff <- 30      # Minimum quality threshold
-window <- 4       # Sliding window size
 step <- 2         # Step size
+
 AA_lib <- "Ath_rbcL_aa.fa"  # Amino acid reference library for frame detection
 
 # Outputs
