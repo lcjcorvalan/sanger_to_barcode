@@ -2,6 +2,8 @@
 # automate DNA barcoder
 # 09/04/2026 -last update
 
+options(show.error.locations = TRUE)
+options(error = traceback)
 
 # Pacotes
 library(Biostrings)
@@ -10,12 +12,13 @@ library(Biostrings)
 
 args <- commandArgs(trailingOnly = TRUE)
 
-if (length(args) < 1) {
-  cat("Uso: Rscript script.r <arquivo.tsv>\n")
-  quit(status = 1)
+if (length(args) < 2) {
+  cat("Uso: Rscript script.r <arquivo.tsv>  <output.tsv>\n")
+  quit(status = 2)
 }
 
 input <- args[1]
+output <- args[2]
 
 if (!file.exists(input)) {
   stop(paste("Arquivo não encontrado:", arquivo))
@@ -26,15 +29,16 @@ if (!file.exists(input)) {
 cutoff <- 30
 window <- 4 
 step <- 2
-AA_lib <- "Ath_rbcL_aa.fa"
+AA_lib <- "models.aa.fasta"
 Bold_db <- "/media/lgbio-nas1/lcorvalan/Sanger_barcode/BOLD_db"
+
 #input <- "Ab1.csv"
 # criando AA db para o blast
 
 # cria o db # mover para antes do loop
-makedb <- paste0("makeblastdb -in ", AA_lib, " -dbtype prot -out tmp_lib_aa")
+#makedb <- paste0("makeblastdb -in ", AA_lib, " -dbtype prot -out tmp_lib_aa")
 
-system(makedb)
+#system(makedb)
 
 # entrada 
 # aqui eu crio um loop para roda para toda lista
@@ -76,31 +80,37 @@ for (i in 1:length(ab1_tbl[,1])) {
   #fastqc -t --noextract PAV296_rbcLB-F_A01_BCPlan-06-S.fq
   
   # Informacoes fwd
-  
   seq_info_q <- paste0("/usr/bin/python3 seq_q.py ", Fwd_ab1_out," ", cutoff, " " , window," ", step, " > Fwd_inf.tsv")
   #seq_info_q <-"/usr/bin/python3 seq_q.py PAV296_rbcLB-F_A01_BCPlan-06-S.fq 30 4 2 > Fwd_inf.tsv"
+  print(seq_info_q)
+  
   system(seq_info_q)
   
   Fwd_raw <- read.table("Fwd_inf.tsv", sep = "\t", header = T, stringsAsFactors = FALSE)
   
   Fwd_ab1_trim_out <- paste0(output_prefix,"_F_trim.fq")
+  print(paste("raw len:", Fwd_raw$read_len))
   
   if (Fwd_raw$read_len>200) { # testando tamanho
     Fwd_raw$last_before[1] <- ifelse((Fwd_raw$last_before[1]=="None" | Fwd_raw$last_before[1]<= 10), yes = 10, no = Fwd_raw$last_before[1])
-    Fwd_raw$first_after[1] <- ifelse((Fwd_raw$first_after[1]=="None" ), yes = Fwd_raw$read_len[1], no = Fwd_raw$first_after[1])
+    Fwd_raw$first_after[1] <- ifelse((Fwd_raw$first_after[1]=="None" | Fwd_raw$first_after[1]<= 0), yes = Fwd_raw$read_len[1], no = Fwd_raw$first_after[1])
     
-    fwd_trim <- paste0("/usr/local/bin/anaconda3/bin/seqkit subseq -r ", Fwd_raw$last_before,":",Fwd_raw$first_after, " ",Fwd_ab1_out, " > ", Fwd_ab1_trim_out)
+    fwd_trim <- paste0("/usr/local/bin/Conda_apps/seqkit subseq -r ", Fwd_raw$last_before,":",Fwd_raw$first_after, " ",Fwd_ab1_out, " > ", Fwd_ab1_trim_out)
     
+    print(fwd_trim)
     system(fwd_trim)
+    print("ok")
     
     # qualidade pos filtro
     
     seq_info_q <- paste0("/usr/bin/python3 seq_q.py ", Fwd_ab1_trim_out," ", cutoff, " " , window," ", step, " > Fwd_inf_trim.tsv")
-    
+    print(seq_info_q)
     #seq_info_q <- "/usr/bin/python3 seq_q.py PAV296_rbcLB-F.fq 30 4 2 > Fwd_inf_trim.tsv"
     system(seq_info_q)
     
     Fwd_trim <- read.table("Fwd_inf_trim.tsv", sep = "\t", header = T, stringsAsFactors = FALSE)
+    
+    print(Fwd_trim)
     
     if (Fwd_trim$read_len>200) {
       Fwd_status <- "ok"
@@ -140,6 +150,7 @@ for (i in 1:length(ab1_tbl[,1])) {
   
   # info rev
   Rev_ab1_trim_out <- paste0(output_prefix,"_R_trim.fq")
+  print(Rev_ab1_trim_out)
   seq_info_q <- paste0("/usr/bin/python3 seq_q.py ", Rev_ab1_out," ", cutoff, " " , window," ", step, " > Rev_inf.tsv")
   
   system(seq_info_q)
@@ -152,10 +163,10 @@ for (i in 1:length(ab1_tbl[,1])) {
     Rev_ab1_trim_out <- paste0(output_prefix,"_R_trim.fq")
     # se nao tiver que corta no inicio
     Rev_raw$last_before[1] <- ifelse((Rev_raw$last_before[1]=="None" | Rev_raw$last_before[1]<= 10), yes = 10, no = Rev_raw$last_before[1])
-    Rev_raw$first_after[1] <- ifelse((Rev_raw$first_after[1]=="None" ), yes = Rev_raw$read_len[1], no = Rev_raw$first_after[1])
+    Rev_raw$first_after[1] <- ifelse((Rev_raw$first_after[1]=="None" | Rev_raw$first_after[1] <= 0), yes = Rev_raw$read_len[1], no = Rev_raw$first_after[1])
     
     
-    Rev_trim <- paste0("/usr/local/bin/anaconda3/bin/seqkit subseq -r ", Rev_raw$last_before,":",Rev_raw$first_after, " ",Rev_ab1_out, " > ", Rev_ab1_trim_out)
+    Rev_trim <- paste0("/usr/local/bin/Conda_apps/seqkit subseq -r ", Rev_raw$last_before,":",Rev_raw$first_after, " ",Rev_ab1_out, " > ", Rev_ab1_trim_out)
     system(Rev_trim)
     
     # qualidade pos filtro
@@ -191,9 +202,18 @@ for (i in 1:length(ab1_tbl[,1])) {
   if(Rev_status== "ok" & Fwd_status== "ok") { # teste para ver se pode juntar
     print(paste(output_prefix,"Tamanho ok merging"))
     cut <- as.numeric(Fwd_raw$read_len)-as.numeric(Fwd_raw$first_after)
+    
+    # pegando tamanho 
+    resultado <- ifelse(
+      is.na(suppressWarnings(as.numeric(Rev_raw$read_len))) |
+        is.na(suppressWarnings(as.numeric(Rev_raw$first_after))),
+      0,
+      as.numeric(Rev_raw$read_len) - as.numeric(Rev_raw$first_after)
+    )
+    
     merge <- paste0("docker run --rm -v $(pwd):/data geargenomics/tracy tracy consensus -t 0 -q ",
                     Fwd_raw$last_before," -u ", cut, 
-                    " -r ", Rev_raw$last_before, " -s ",  Rev_raw$read_len-Rev_raw$first_after,
+                    " -r ", Rev_raw$last_before, " -s ", resultado,
                     " -o /data/", output_prefix, " /data/", Fwd_input, " /data/", Rev_input)
     
     system(merge)
@@ -202,6 +222,7 @@ for (i in 1:length(ab1_tbl[,1])) {
     merge_status<- "short sequence"
   }
   
+  print(paste0("Merge status: ", merge_status))
   merged_file <- paste0(output_prefix,".fa")
   
   ################################################################################
@@ -288,10 +309,10 @@ for (i in 1:length(ab1_tbl[,1])) {
                                    "length"= "NA", "evalue" = "NA" ,"bitscore"= "NA",
                                    "qstart"= "NA", "qend"= "NA", "sstart"= "NA",
                                    "send" = "NA", "qframe"= "NA",row.names = NULL)
-    
     frame <-  blast_aa_results$qframe
-    seq_tmp$Consensus <- "NA"
-    seq_tmp_aa$Consensus <- "NA"
+    seq_tmp <- data.frame( Consensus = "NA")
+    #seq_tmp$Consensus <- "NA"
+    seq_tmp_aa <- data.frame( Consensus = "NA")
     stop_codon <- "NA"
     Nucleotide_ATCG <- "NA"
     final_len <- "NA"
@@ -371,4 +392,4 @@ for (i in 1:length(ab1_tbl[,1])) {
   tbl_final <- rbind(tbl_final, df_tmp)
 }
 
-write.csv(tbl_final, "tbl_final.csv")
+write.csv(tbl_final, output)
